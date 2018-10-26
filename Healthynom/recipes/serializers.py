@@ -21,7 +21,7 @@ class InventorySerializer(serializers.ModelSerializer):
 
 class IngredientSerializer(serializers.ModelSerializer):
     inventory = InventorySerializer(read_only=False)
-
+    id = serializers.IntegerField(required=False)
     class Meta:
         model = Ingredient
         fields = ('id', 'name', 'inventory')
@@ -29,7 +29,9 @@ class IngredientSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         print(validated_data)
         inventory_data = validated_data.pop('inventory')
-        ingredient, created = Ingredient.objects.update_or_create(**validated_data)
+        pk = validated_data.pop('id')
+        print(pk)
+        ingredient, created = Ingredient.objects.update_or_create(id=pk, defaults={**validated_data})
         print('created ingredient : ' + str(created))
         print(Ingredient)
         spid = inventory_data.pop('supplied_by')
