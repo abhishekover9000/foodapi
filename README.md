@@ -27,9 +27,8 @@ POST /recipes/
     ]
 }
 ```
-
-DELETE /recipes/1/ingredients/1
 ```
+DELETE /recipes/1/ingredients/1
 http 200 OK
 ```
 
