@@ -22,12 +22,6 @@ class Recipe(models.Model):
     def __str__(self):
         return self.name
 
-class RecipeIngredient(models.Model):
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-    quantityInGrams = models.PositiveIntegerField()
-    def __str__(self):
-        return self.ingredient.name
 
 class Inventory(models.Model):
     ingredient = models.OneToOneField(Ingredient, on_delete=models.CASCADE)
@@ -38,3 +32,19 @@ class Inventory(models.Model):
     def __str__(self):
         return self.ingredient.name
 
+class RecipeIngredient(models.Model):
+    CHOICES = (
+        ('lbs', 'pounds'),
+        ('oz', 'ounces'),
+        ('floz', 'fluid ounces'),
+        ('g', 'grams'),
+    )
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    ingredient_name = models.CharField(max_length=100)
+    ndbid = models.PositiveIntegerField()
+    amount = models.PositiveIntegerField()
+    measurement = models.CharField(choices=CHOICES, max_length=4)
+
+    def __str__(self):
+        return self.ingredient.name
