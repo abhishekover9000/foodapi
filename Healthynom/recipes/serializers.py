@@ -2,6 +2,14 @@ from rest_framework import serializers
 from .models import *
 from django.shortcuts import get_object_or_404
 
+
+class NutrientSerializer(serializers.Serializer):
+    ingredient = serializers.CharField(max_length=300)
+    protein = serializers.FloatField()
+    calories = serializers.FloatField()
+    fat = serializers.FloatField()
+
+
 class SupplierSerializer(serializers.ModelSerializer):
     class Meta:
         model = Supplier
@@ -44,34 +52,37 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(required=False)
+    ingredient = serializers.PrimaryKeyRelatedField(required=False, read_only=True)
+    recipe = serializers.PrimaryKeyRelatedField(required=False, read_only=True)
     class Meta:
         model = RecipeIngredient
-        fields = ('id', 'ingredient', 'recipe', 'quantityInGrams')
-
-    def create(self, validated_data):
-        print(validated_data)
-        ingredientID = validated_data.pop('ingredient')
-        ingredient = get_object_or_404(Ingredient, id=ingredientID)
-        recipeId = validated_data.pop('recipe')
-        recipe = get_object_or_404(Recipe, id=recipeId)
-        if 'id' in validated_data:
-            ingredientID = validated_data.pop('id')
-            recipeingredient, created = RecipeIngredient.objects.update_or_create(id=ingredientID,
-                                                                                  defaults={
-                                                                                      'recipe':recipe,
-                                                                                      'ingredient':ingredient,
-                                                                                      **validated_data
-                                                                                  })
-            return recipeingredient
-        else:
-            recipeingredient = RecipeIngredient.objects.create(recipe=recipe, ingredient=ingredient, **validated_data)
-            return recipeingredient
-
-
+        fields = ('ingredient', 'recipe', 'ingredient_name', 'ndbid', 'amount', 'measurement')
 
 class RecipeSerializer(serializers.ModelSerializer):
-    recipeingredient_set = RecipeIngredientSerializer(many=True, required=False)
+    ingredients = RecipeIngredientSerializer(many=True, required=False, source='recipeingredient_set')
+    recipeName = serializers.CharField(source='name')
+    recipeInstructions = serializers.CharField(source='steps')
     class Meta:
         model = Recipe
-        fields = ('id', 'name', 'steps', 'recipeingredient_set')
+        fields = ('id', 'recipeName', 'recipeInstructions', 'ingredients')
+
+    def create(self, validated_data):
+        r, created = Recipe.objects.update_or_create(name=validated_data['recipeName'],
+                                                     defaults={
+                                                         'name': validated_data['recipeName'],
+                                                         'steps': validated_data['recipeInstructions']
+                                                     })
+        i = validated_data.pop('ingredients')
+        print(i)
+        for ingredient in i:
+            print(ingredient)
+            apiIngredient, created = Ingredient.objects.get_or_create(name = ingredient['ingredient_name'])
+            ii, created = RecipeIngredient.objects.update_or_create(ndbid= ingredient['ndbid'], defaults={
+                'ingredient':apiIngredient,
+                'recipe':r,
+                'ingredient_name':ingredient['ingredient_name'],
+                'ndbid':ingredient['ndbid'],
+                'amount':ingredient['amount'],
+                'measurement':ingredient['measurement']
+            })
+        return r
