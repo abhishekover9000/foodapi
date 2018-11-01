@@ -18,44 +18,42 @@ class Nutrition(object):
 
 # computes nutrition using the nutrition api(needs work)
 class NutritionView(APIView):
+    conversion = {
+        'lbs': 453.592,
+        'oz':28.3495,
+        'floz':28.3495
+    }
     apiKey = "Ejxbm3FIhIFtATLIozMMBT4sR0QNKiWrwt7TUChQ"
     def get(self, request, pk, format=None):
         recipe = get_object_or_404(Recipe, id=pk)
         recipeIngredients = get_list_or_404(RecipeIngredient, recipe=recipe)
-        dataList = []
-        for ingredient in recipeIngredients:
-            inventory = Inventory.objects.get(ingredient=ingredient.ingredient)
-            response = requests.get('https://api.nal.usda.gov/ndb/reports/?ndbno='+str(inventory.ndbid)+'&type=f&format=json&api_key='+self.apiKey)
-            if response.ok:
-                data = json.loads(response.content)
-                calCoefficient = float(data['report']['food']['nutrients'][0]['measures'][0]['value'])/data['report']['food']['nutrients'][0]['measures'][0]['eqv']
-                proteinCoefficient = float(data['report']['food']['nutrients'][1]['measures'][0]['value'])/data['report']['food']['nutrients'][1]['measures'][0]['eqv']
-                print(data['report']['food']['nutrients'][0])
-                fatCoefficient = float(data['report']['food']['nutrients'][2]['measures'][0]['value'])/data['report']['food']['nutrients'][2]['measures'][0]['eqv']
-                protein = ingredient.quantityInGrams * proteinCoefficient
-                calories = ingredient.quantityInGrams * calCoefficient
-                fat = ingredient.quantityInGrams * fatCoefficient
-                obj = Nutrition(ingredient= ingredient.ingredient.name, protein = protein, calories= calories, fat = fat)
-                dataList.append(obj)
 
-        serializer = NutrientSerializer(dataList, many=True)
         return Response(serializer.data)
 
 
 # computes price of recipe based on inventory
 class ComputePrice(APIView):
+    conversion = {
+        'lbs': 453.592,
+        'oz': 28.3495,
+        'floz': 28.3495
+    }
     def get(self, request, pk, format=None):
         print(pk)
         recipe = get_object_or_404(Recipe, id=pk)
         recipeIngredients = get_list_or_404(RecipeIngredient, recipe=recipe)
         total = 0
+        responsedict = {}
         for ingredient in recipeIngredients:
             print(ingredient)
             i = get_object_or_404(Ingredient, id=ingredient.ingredient.id)
             inventory = get_object_or_404(Inventory, ingredient=i)
-            total = total + (ingredient.quantityInGrams*inventory.costPerGram)
-        return Response({"cost per meal" : total})
-
+            quantityInGrams = ingredient.amount*self.conversion[ingredient.measurement]
+            tempcost = (quantityInGrams*inventory.costPerGram)
+            responsedict[ingredient.ingredient_name] = '$' + str(tempcost)
+            total = total + tempcost
+        responsedict['cost per meal'] = '$'+ str(total)
+        return Response(responsedict)
 
 # display, creation, editing of inventory instances
 class InventoryView(APIView):
@@ -94,6 +92,8 @@ class RecipeView(APIView):
             model = data.create(validated_data = data.data)
             serializer = RecipeSerializer(model)
             return Response(serializer.data)
+        else:
+            return Response(data.errors)
 
 
 # handles deletion and display of recipe ingredients

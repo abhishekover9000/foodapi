@@ -19,6 +19,9 @@ class Recipe(models.Model):
     name = models.CharField(max_length=30)
     is_active = models.BooleanField(default=True)
     steps = models.TextField()
+    portions = models.PositiveSmallIntegerField()
+    people = models.PositiveSmallIntegerField()
+    prepTime = models.PositiveSmallIntegerField()
     def __str__(self):
         return self.name
 
@@ -28,7 +31,6 @@ class Inventory(models.Model):
     costPerGram = models.FloatField()
     remainingQuantity = models.PositiveIntegerField()
     supplied_by = models.ForeignKey(Supplier, on_delete=models.CASCADE)
-    ndbid = models.PositiveIntegerField()
     def __str__(self):
         return self.ingredient.name
 

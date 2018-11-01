@@ -22,7 +22,6 @@ class InventorySerializer(serializers.ModelSerializer):
         model = Inventory
         fields = ('costPerGram',
                   'remainingQuantity',
-                  'ndbid',
                   'supplied_by')
 
 
@@ -64,25 +63,29 @@ class RecipeSerializer(serializers.ModelSerializer):
     recipeInstructions = serializers.CharField(source='steps')
     class Meta:
         model = Recipe
-        fields = ('id', 'recipeName', 'recipeInstructions', 'ingredients')
+        fields = ('id', 'recipeName', 'recipeInstructions', 'ingredients', 'portions', 'people', 'prepTime')
 
     def create(self, validated_data):
+        print(validated_data)
         r, created = Recipe.objects.update_or_create(name=validated_data['recipeName'],
                                                      defaults={
                                                          'name': validated_data['recipeName'],
-                                                         'steps': validated_data['recipeInstructions']
+                                                         'steps': validated_data['recipeInstructions'],
+                                                         'portions':validated_data['portions'],
+                                                         'people':validated_data['people'],
+                                                         'prepTime':validated_data['prepTime']
                                                      })
         i = validated_data.pop('ingredients')
         print(i)
         for ingredient in i:
             print(ingredient)
             apiIngredient, created = Ingredient.objects.get_or_create(name = ingredient['ingredient_name'])
-            ii, created = RecipeIngredient.objects.update_or_create(ndbid= ingredient['ndbid'], defaults={
+            ii, created = RecipeIngredient.objects.update_or_create(recipe=r, ndbid=ingredient['ndbid'], defaults={
                 'ingredient':apiIngredient,
                 'recipe':r,
                 'ingredient_name':ingredient['ingredient_name'],
                 'ndbid':ingredient['ndbid'],
-                'amount':ingredient['amount'],
+                'amount':ingredient['amount']/r.portions,
                 'measurement':ingredient['measurement']
             })
         return r
