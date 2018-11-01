@@ -49,6 +49,7 @@ class ComputePrice(APIView):
             i = get_object_or_404(Ingredient, id=ingredient.ingredient.id)
             inventory = get_object_or_404(Inventory, ingredient=i)
             quantityInGrams = ingredient.amount*self.conversion[ingredient.measurement]
+            quantityInGrams = quantityInGrams * recipe.portions
             tempcost = (quantityInGrams*inventory.costPerGram)
             responsedict[ingredient.ingredient_name] = '$' + str(tempcost)
             total = total + tempcost
