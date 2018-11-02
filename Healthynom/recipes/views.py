@@ -114,7 +114,13 @@ class RecipeIngredientView(APIView):
         ingredient.delete()
         return Response(status=200)
 
-
+class SearchView(APIView):
+    def get(self, request):
+        print(request.GET['q'])
+        search = request.GET['q']
+        list = Ingredient.objects.filter(name__contains=search)
+        serializer = IngredientSerializer(list, many=True)
+        return Response(serializer.data)
 
 class DestroyIngredient(generics.RetrieveDestroyAPIView):
     queryset = Ingredient.objects.all()
