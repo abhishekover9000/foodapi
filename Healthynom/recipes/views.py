@@ -33,11 +33,6 @@ class NutritionView(APIView):
 
 # computes price of recipe based on inventory
 class ComputePrice(APIView):
-    conversion = {
-        'lbs': 453.592,
-        'oz': 28.3495,
-        'floz': 28.3495
-    }
     def get(self, request, pk, format=None):
         print(pk)
         recipe = get_object_or_404(Recipe, id=pk)
@@ -48,9 +43,7 @@ class ComputePrice(APIView):
             print(ingredient)
             i = get_object_or_404(Ingredient, id=ingredient.ingredient.id)
             inventory = get_object_or_404(Inventory, ingredient=i)
-            quantityInGrams = ingredient.amount*self.conversion[ingredient.measurement]
-            quantityInGrams = quantityInGrams * recipe.portions
-            tempcost = (quantityInGrams*inventory.costPerGram)
+            tempcost = ingredient.amount * i.inventory.price
             responsedict[ingredient.ingredient_name] = '$' + str(tempcost)
             total = total + tempcost
         responsedict['cost per meal'] = '$'+ str(total)
