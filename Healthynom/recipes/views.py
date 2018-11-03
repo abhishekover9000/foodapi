@@ -4,8 +4,7 @@ from rest_framework import generics
 from rest_framework.decorators import api_view
 from .models import *
 from .serializers import *
-import requests
-import json
+from django_filters.rest_framework import DjangoFilterBackend
 # Create your views here.
 
 class Nutrition(object):
@@ -124,6 +123,8 @@ class DestroyIngredient(generics.RetrieveDestroyAPIView):
 class SupplierView(generics.ListCreateAPIView):
     queryset = Supplier.objects.all()
     serializer_class = SupplierSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filter_fields = ('name',)
 
 
 class DestroySupplier(generics.RetrieveUpdateDestroyAPIView):
