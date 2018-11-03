@@ -12,6 +12,7 @@ class Supplier(models.Model):
 
 class Ingredient(models.Model):
     name = models.CharField(max_length=30)
+    ndbid = models.PositiveIntegerField()
     def __str__(self):
         return self.name
 
@@ -27,9 +28,16 @@ class Recipe(models.Model):
 
 
 class Inventory(models.Model):
+    CHOICES = (
+        ('lbs', 'pounds'),
+        ('oz', 'ounces'),
+        ('floz', 'fluid ounces'),
+        ('g', 'grams'),
+    )
     ingredient = models.OneToOneField(Ingredient, on_delete=models.CASCADE)
-    costPerGram = models.FloatField()
-    remainingQuantity = models.PositiveIntegerField()
+    price = models.FloatField()
+    measurement = models.CharField(choices=CHOICES, max_length=4)
+    amount = models.PositiveIntegerField()
     supplied_by = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     def __str__(self):
         return self.ingredient.name

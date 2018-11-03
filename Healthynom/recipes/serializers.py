@@ -20,25 +20,24 @@ class InventorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Inventory
-        fields = ('costPerGram',
-                  'remainingQuantity',
-                  'supplied_by')
+        fields = ('price', 'measurement', 'amount', 'supplied_by')
 
 
 
 class IngredientSerializer(serializers.ModelSerializer):
     inventory = InventorySerializer(read_only=False)
-    id = serializers.IntegerField(required=False)
+    name=serializers.CharField(required=False)
+    ndbid = serializers.IntegerField(required=False)
     class Meta:
         model = Ingredient
-        fields = ('id', 'name', 'inventory')
+        fields = ('name', 'ndbid', 'inventory')
 
     def create(self, validated_data):
         print(validated_data)
         inventory_data = validated_data.pop('inventory')
-        pk = validated_data.pop('id')
-        print(pk)
-        ingredient, created = Ingredient.objects.update_or_create(id=pk, defaults={**validated_data})
+        ndbid = validated_data.pop('ndbid')
+        print(ndbid)
+        ingredient, created = Ingredient.objects.update_or_create(ndbid=ndbid, defaults={**validated_data})
         print('created ingredient : ' + str(created))
         print(Ingredient)
         spid = inventory_data.pop('supplied_by')
@@ -79,7 +78,10 @@ class RecipeSerializer(serializers.ModelSerializer):
         print(i)
         for ingredient in i:
             print(ingredient)
-            apiIngredient, created = Ingredient.objects.get_or_create(name = ingredient['ingredient_name'])
+            apiIngredient, created = Ingredient.objects.get_or_create(name = ingredient['ingredient_name'],defaults={
+                'name':ingredient['ingredient_name'],
+                'ndbid':ingredient['ndbid']
+            })
             ii, created = RecipeIngredient.objects.update_or_create(recipe=r, ndbid=ingredient['ndbid'], defaults={
                 'ingredient':apiIngredient,
                 'recipe':r,
